@@ -9,19 +9,28 @@
 import Foundation
 import UIKit
 
-class LoginViewController : UIViewController {
+class LoginViewController : UIViewController, UITextFieldDelegate {
     
     @IBOutlet weak var textFiled_username: UITextField!
     @IBOutlet weak var textFiled_password: UITextField!
     override func viewDidAppear(animated: Bool) {
-        var userDefault = NSUserDefaults.standardUserDefaults()
-        let isLogin = userDefault.boolForKey("isLogin")
-        println(isLogin)
         
-        if isLogin {
-            var controller: AnyObject? = storyboard?.instantiateViewControllerWithIdentifier("MainViewController")
-            presentViewController(controller as UIViewController, animated: true, completion: nil)
+        textFiled_password.delegate = self
+        
+        var userDefault = NSUserDefaults.standardUserDefaults()
+        let username = userDefault.stringForKey("username")
+        let password = userDefault.stringForKey("password")
+        
+        if username != nil && password != nil {
+            var login = Login()
+            login.login(username!, password: password!.md5, handleLoginResult)
         }
+        
+    }
+    
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+        login()
+        return true
     }
     
     
@@ -45,7 +54,7 @@ class LoginViewController : UIViewController {
             alertView.show()
         }
         else {
-            login.login(textFiled_username.text, password: textFiled_password.text, handleLoginResult)
+            login.login(textFiled_username.text, password: textFiled_password.text.md5, handleLoginResult)
         }
     }
     
@@ -57,6 +66,14 @@ class LoginViewController : UIViewController {
             if let str = NSString(data: data, encoding: NSUTF8StringEncoding) {
                 println(str)
             }
+            
+            dispatch_async(dispatch_get_main_queue(), {
+                let controller: AnyObject? = self.storyboard?.instantiateViewControllerWithIdentifier("MainViewController")
+                
+                self.presentViewController(controller as UIViewController, animated: true, completion: nil)
+            })
         }
     }
+    
+    
 }

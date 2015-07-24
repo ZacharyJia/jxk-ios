@@ -21,6 +21,7 @@
 		B6A33D641B61093600B566D3 /* StringHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A33D631B61093600B566D3 /* StringHelper.swift */; };
 		B6A33D6B1B6112DB00B566D3 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B6A33D681B6112DB00B566D3 /* Info.plist */; };
 		B6A33D6C1B6112DB00B566D3 /* PZPullToRefreshView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A33D6A1B6112DB00B566D3 /* PZPullToRefreshView.swift */; };
+		B6A33D711B62502100B566D3 /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A33D701B62502100B566D3 /* DetailViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +57,7 @@
 		B6A33D681B6112DB00B566D3 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B6A33D691B6112DB00B566D3 /* PZPullToRefresh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PZPullToRefresh.h; sourceTree = "<group>"; };
 		B6A33D6A1B6112DB00B566D3 /* PZPullToRefreshView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PZPullToRefreshView.swift; sourceTree = "<group>"; };
+		B6A33D701B62502100B566D3 /* DetailViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetailViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -142,6 +144,7 @@
 				B6A33D441B5C904300B566D3 /* LoginViewController.swift */,
 				B6A33D221B5C8CC800B566D3 /* NewsViewController.swift */,
 				B6A33D241B5C8CC800B566D3 /* SecondViewController.swift */,
+				B6A33D701B62502100B566D3 /* DetailViewController.swift */,
 			);
 			name = Controller;
 			sourceTree = "<group>";
@@ -281,6 +284,7 @@
 				B6A33D211B5C8CC800B566D3 /* AppDelegate.swift in Sources */,
 				B6A33D641B61093600B566D3 /* StringHelper.swift in Sources */,
 				B6A33D231B5C8CC800B566D3 /* NewsViewController.swift in Sources */,
+				B6A33D711B62502100B566D3 /* DetailViewController.swift in Sources */,
 				B6A33D621B6108CD00B566D3 /* ImageCache.swift in Sources */,
 				B6A33D4B1B5C974D00B566D3 /* Http.swift in Sources */,
 			);

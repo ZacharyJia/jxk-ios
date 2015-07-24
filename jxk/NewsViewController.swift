@@ -25,6 +25,18 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
      */
     @IBAction func segmentChanged(sender: UISegmentedControl) {
         selectedSegment = sender.selectedSegmentIndex
+        switch selectedSegment {
+        case 0:
+            if arrNew.count == 0 {
+                HttpRequest.POST("http://bjtucit.sinaapp.com/api/getNewest.php?offset=0", params: Dictionary<String, String>(), handler: processNewest)
+            }
+        case 1:
+            if arrHot.count == 0 {
+                HttpRequest.POST("http://bjtucit.sinaapp.com/api/getHotArticle.php?offset=0", params: Dictionary<String, String>(), handler: processHotest)
+            }
+        case 2: break
+        default:break
+        }
         tableView.reloadData()
     }
 
@@ -79,12 +91,17 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         switch selectedSegment {
         case 0:
-            label_column.text = arrNew[indexPath.item]["column"]
+            label_column.text = "来自 " + arrNew[indexPath.item]["column"]!
             label_title.text = arrNew[indexPath.item]["title"]
             label_content.text = arrNew[indexPath.item]["content"]
             ImageCache.setImagesViewData(image, imageString: arrNew[indexPath.item]["image"]!)
             
-        case 1:break
+        case 1:
+            label_column.text = "来自 " + arrHot[indexPath.item]["column"]!
+            label_title.text = arrHot[indexPath.item]["title"]
+            label_content.text = arrHot[indexPath.item]["content"]
+            ImageCache.setImagesViewData(image, imageString: arrHot[indexPath.item]["image"]!)
+
         case 2:break
         default:break
         }
@@ -154,9 +171,56 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
         }
         refreshHeaderView?.isLoading = false
         refreshHeaderView?.refreshScrollViewDataSourceDidFinishedLoading(self.tableView)
-
         
     }
+    
+    //处理最热数据的返回消息
+    func processHotest(data: NSData!, response: NSURLResponse!, error: NSError?) {
+        
+        if (error != nil) {
+            println("\(error)")
+            
+            dispatch_async(dispatch_get_main_queue(), {
+                let alert = UIAlertView()
+                alert.title = "无法连接网络，请稍后再试"
+                alert.addButtonWithTitle("确定")
+                alert.show()
+            })
+        }
+        else {
+            
+            arrHot.removeAll(keepCapacity: false)
+            var str = NSString(data: data, encoding: NSUTF8StringEncoding)
+            println(str)
+            
+            var json: AnyObject? = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil)
+            var titles = json?.objectForKey("titles") as NSArray
+            var ids = json?.objectForKey("ids") as NSArray
+            var images = json?.objectForKey("images") as NSArray
+            
+            var columns = json?.objectForKey("columns") as NSArray
+            var contents = json?.objectForKey("contents") as NSArray
+            
+            
+            var i: Int
+            for i = 0; i < titles.count; i++ {
+                var dic = Dictionary<String, String>()
+                dic["title"] = titles[i] as? String
+                dic["id"] = ids[i] as? String
+                dic["image"] = images[i] as? String
+                dic["column"] = columns[i] as? String
+                dic["content"] = contents[i] as? String
+                arrHot.append(dic)
+            }
+            
+            dispatch_async(dispatch_get_main_queue(), {self.tableView.reloadData()})
+            
+        }
+        refreshHeaderView?.isLoading = false
+        refreshHeaderView?.refreshScrollViewDataSourceDidFinishedLoading(self.tableView)
+        
+    }
+
     
     func scrollViewDidScroll(scrollView: UIScrollView) {
         refreshHeaderView?.refreshScrollViewDidScroll(scrollView)
