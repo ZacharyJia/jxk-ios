@@ -34,7 +34,10 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
             if arrHot.count == 0 {
                 HttpRequest.POST("http://bjtucit.sinaapp.com/api/getHotArticle.php?offset=0", params: Dictionary<String, String>(), handler: processHotest)
             }
-        case 2: break
+        case 2:
+            if arrColumn.count == 0 {
+                HttpRequest.POST("http://bjtucit.sinaapp.com/api/getColumn.php", params: Dictionary<String, String>(), handler: processColumn)
+            }
         default:break
         }
         tableView.reloadData()
@@ -43,6 +46,7 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.r
+        
 
         //设置tableView的delegate和dataSource
         tableView.delegate = self
@@ -102,7 +106,11 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
             label_content.text = arrHot[indexPath.item]["content"]
             ImageCache.setImagesViewData(image, imageString: arrHot[indexPath.item]["image"]!)
 
-        case 2:break
+        case 2:
+            label_column.text = ""
+            label_title.text = arrColumn[indexPath.item]["column"]
+            label_content.text = arrColumn[indexPath.item]["introduction"]
+            //ImageCache.setImagesViewData(image, imageString: arrHot[indexPath.item]["image"]!)
         default:break
         }
         
@@ -118,6 +126,23 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
      */
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
+        
+        var controller: AnyObject?
+        switch selectedSegment{
+        case 0:
+            controller = storyboard?.instantiateViewControllerWithIdentifier("DetailViewController")
+            (controller as DetailViewController).articleID = arrNew[indexPath.item]["id"]!
+            (controller as DetailViewController).articleTitle = arrNew[indexPath.item]["title"]!
+        case 1:
+            controller = storyboard?.instantiateViewControllerWithIdentifier("DetailViewController")
+            (controller as DetailViewController).articleID = arrHot[indexPath.item]["id"]!
+            (controller as DetailViewController).articleTitle = arrHot[indexPath.item]["title"]!
+        case 2: break
+        default: break
+        }
+        if controller != nil {
+            presentViewController(controller as UIViewController, animated: true, completion: nil)
+        }
     }
     
 
@@ -142,7 +167,7 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
         }
         else {
         
-            arrNew.removeAll(keepCapacity: false)
+            arrNew.removeAll(keepCapacity: true)
             var str = NSString(data: data, encoding: NSUTF8StringEncoding)
             println(str)
             
@@ -189,7 +214,7 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
         }
         else {
             
-            arrHot.removeAll(keepCapacity: false)
+            arrHot.removeAll(keepCapacity: true)
             var str = NSString(data: data, encoding: NSUTF8StringEncoding)
             println(str)
             
@@ -220,7 +245,51 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
         refreshHeaderView?.refreshScrollViewDataSourceDidFinishedLoading(self.tableView)
         
     }
+    
+    
+    //处理栏目列表的返回消息
+    func processColumn(data: NSData!, response: NSURLResponse!, error: NSError?) {
+        
+        if (error != nil) {
+            println("\(error)")
+            
+            dispatch_async(dispatch_get_main_queue(), {
+                let alert = UIAlertView()
+                alert.title = "无法连接网络，请稍后再试"
+                alert.addButtonWithTitle("确定")
+                alert.show()
+            })
+        }
+        else {
+            
+            arrColumn.removeAll(keepCapacity: true)
+            var str = NSString(data: data, encoding: NSUTF8StringEncoding)
+            println(str)
+            
+            var json: AnyObject? = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil)
+            var ids = json?.objectForKey("ids") as NSArray
+            var columns = json?.objectForKey("columns") as NSArray
+            var introduction = json?.objectForKey("introductions") as NSArray
+            var images = json?.objectForKey("images") as NSArray
 
+            
+            var i: Int
+            for i = 0; i < ids.count; i++ {
+                var dic = Dictionary<String, String>()
+                dic["id"] = ids[i] as? String
+                dic["column"] = columns[i] as? String
+                dic["introduction"] = introduction[i] as? String
+                dic["image"] = images[i] as? String
+                arrColumn.append(dic)
+            }
+            
+            dispatch_async(dispatch_get_main_queue(), {self.tableView.reloadData()})
+            
+        }
+        refreshHeaderView?.isLoading = false
+        refreshHeaderView?.refreshScrollViewDataSourceDidFinishedLoading(self.tableView)
+        
+    }
     
     func scrollViewDidScroll(scrollView: UIScrollView) {
         refreshHeaderView?.refreshScrollViewDidScroll(scrollView)
@@ -233,7 +302,15 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     func pullToRefreshDidTrigger(view: PZPullToRefreshView) {
         refreshHeaderView?.isLoading = true
-        HttpRequest.POST("http://bjtucit.sinaapp.com/api/getNewest.php?offset=0", params: Dictionary<String, String>(), handler: processNewest)
+        switch selectedSegment {
+        case 0:
+            HttpRequest.POST("http://bjtucit.sinaapp.com/api/getNewest.php?offset=0", params: Dictionary<String, String>(), handler: processNewest)
+        case 1:
+            HttpRequest.POST("http://bjtucit.sinaapp.com/api/getHotArticle.php?offset=0", params: Dictionary<String, String>(), handler: processHotest)
+        case 2:
+            HttpRequest.POST("http://bjtucit.sinaapp.com/api/getColumn.php", params: Dictionary<String, String>(), handler: processColumn)
+        default:break;
+        }
     }
     
     func pullToRefreshLastUpdated(view: PZPullToRefreshView) -> NSDate {
