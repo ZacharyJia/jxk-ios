@@ -41,10 +41,7 @@ class LoginViewController : UIViewController, UITextFieldDelegate {
         presentViewController(controller as UIViewController, animated: true, completion: nil)
 
     }
-    @IBAction func loginByReturn() {
-        login()
-    }
-    
+
     @IBAction func login() {
         var login = Login()
         if textFiled_password.text == "" || textFiled_username.text == "" {
@@ -67,11 +64,33 @@ class LoginViewController : UIViewController, UITextFieldDelegate {
                 println(str)
             }
             
-            dispatch_async(dispatch_get_main_queue(), {
-                let controller: AnyObject? = self.storyboard?.instantiateViewControllerWithIdentifier("MainViewController")
+            let json: AnyObject? = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil)
+            
+            let status = json?.objectForKey("status") as String
+            if status == "success" {
+                let username = json?.objectForKey("username") as String
+                let studentID = json?.objectForKey("studentID") as String
+                let tag = json?.objectForKey("tag") as String
                 
-                self.presentViewController(controller as UIViewController, animated: true, completion: nil)
-            })
+                let userDefault = NSUserDefaults.standardUserDefaults()
+                userDefault.setObject(username, forKey: "nickname")
+                userDefault.setObject(studentID, forKey: "studentID")
+                userDefault.setObject(tag, forKey: "tag")
+                
+                dispatch_async(dispatch_get_main_queue(), {
+                    let controller: AnyObject? = self.storyboard?.instantiateViewControllerWithIdentifier("MainViewController")
+                    
+                    self.presentViewController(controller as UIViewController, animated: true, completion: nil)
+                })
+            }
+            else {
+                dispatch_sync(dispatch_get_main_queue(), {
+                    let alertView = UIAlertView()
+                    alertView.title = "邮箱或密码错误，请重新输入"
+                    alertView.addButtonWithTitle("确定")
+                    alertView.show()
+                })
+            }
         }
     }
     

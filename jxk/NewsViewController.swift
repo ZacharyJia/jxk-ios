@@ -19,6 +19,7 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
     var arrColumn: Array<Dictionary<String, String>> = []
     
     var refreshHeaderView: PZPullToRefreshView?
+    var footerLabel: UILabel? = nil
     
     /*
      * 切换segment
@@ -27,14 +28,19 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
         selectedSegment = sender.selectedSegmentIndex
         switch selectedSegment {
         case 0:
+            tableView.tableFooterView = footerLabel
+            footerLabel?.text = "上拉加载更多"
             if arrNew.count == 0 {
                 HttpRequest.POST("http://bjtucit.sinaapp.com/api/getNewest.php?offset=0", params: Dictionary<String, String>(), handler: processNewest)
             }
         case 1:
+            tableView.tableFooterView = footerLabel
+            footerLabel?.text = "上拉加载更多"
             if arrHot.count == 0 {
                 HttpRequest.POST("http://bjtucit.sinaapp.com/api/getHotArticle.php?offset=0", params: Dictionary<String, String>(), handler: processHotest)
             }
         case 2:
+            tableView.tableFooterView = nil
             if arrColumn.count == 0 {
                 HttpRequest.POST("http://bjtucit.sinaapp.com/api/getColumn.php", params: Dictionary<String, String>(), handler: processColumn)
             }
@@ -47,7 +53,12 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.r
         
-
+        self.footerLabel = UILabel(frame: CGRect(x: 0, y: tableView.bounds.size.height, width: tableView.bounds.size.width, height: 20))
+        footerLabel!.textAlignment = NSTextAlignment.Center
+        footerLabel!.font = UIFont(descriptor: UIFontDescriptor(), size: 13)
+        footerLabel!.text = "上拉加载更多"
+        tableView.tableFooterView = footerLabel
+        
         //设置tableView的delegate和dataSource
         tableView.delegate = self
         tableView.dataSource = self
@@ -313,8 +324,119 @@ class NewsViewController: UIViewController, UITableViewDataSource, UITableViewDe
         }
     }
     
+    func loadMoreDidTrigger(view: PZPullToRefreshView) {
+        refreshHeaderView?.isLoading = true
+        switch selectedSegment {
+        case 0:
+            HttpRequest.POST("http://bjtucit.sinaapp.com/api/getNewest.php?offset=\(arrNew.count)", params: Dictionary<String, String>(), handler: processNewestMore)
+        case 1:
+            HttpRequest.POST("http://bjtucit.sinaapp.com/api/getHotArticle.php?offset=\(arrHot.count)" , params: Dictionary<String, String>(), handler: processHotestMore)
+        default:break;
+        }
+    }
+    
     func pullToRefreshLastUpdated(view: PZPullToRefreshView) -> NSDate {
         return NSDate()
     }
+    
+    //处理最新数据的返回消息 More
+    func processNewestMore(data: NSData!, response: NSURLResponse!, error: NSError?) {
+        
+        if (error != nil) {
+            println("\(error)")
+            
+            dispatch_async(dispatch_get_main_queue(), {
+                let alert = UIAlertView()
+                alert.title = "无法连接网络，请稍后再试"
+                alert.addButtonWithTitle("确定")
+                alert.show()
+            })
+        }
+        else {
+            var str = NSString(data: data, encoding: NSUTF8StringEncoding)
+            println(str)
+            
+            var json: AnyObject? = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil)
+            var titles = json?.objectForKey("titles") as NSArray
+            var ids = json?.objectForKey("ids") as NSArray
+            var images = json?.objectForKey("images") as NSArray
+            
+            var columns = json?.objectForKey("columns") as NSArray
+            var contents = json?.objectForKey("contents") as NSArray
+            
+            
+            var i: Int
+            for i = 0; i < titles.count; i++ {
+                var dic = Dictionary<String, String>()
+                dic["title"] = titles[i] as? String
+                dic["id"] = ids[i] as? String
+                dic["image"] = images[i] as? String
+                dic["column"] = columns[i] as? String
+                dic["content"] = contents[i] as? String
+                arrNew.append(dic)
+            }
+            
+            dispatch_async(dispatch_get_main_queue(), {
+                self.tableView.reloadData()
+                if titles.count < 10 {
+                    self.footerLabel?.text = "没有更多"
+                }
+            })
+            
+        }
+        refreshHeaderView?.isLoadingMore = false
+        refreshHeaderView?.refreshScrollViewDataSourceDidFinishedLoading(self.tableView)
+        
+    }
+    
+    //处理最热数据的返回消息 More
+    func processHotestMore(data: NSData!, response: NSURLResponse!, error: NSError?) {
+        
+        if (error != nil) {
+            println("\(error)")
+            
+            dispatch_async(dispatch_get_main_queue(), {
+                let alert = UIAlertView()
+                alert.title = "无法连接网络，请稍后再试"
+                alert.addButtonWithTitle("确定")
+                alert.show()
+            })
+        }
+        else {
+            var str = NSString(data: data, encoding: NSUTF8StringEncoding)
+            println(str)
+            
+            var json: AnyObject? = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions.allZeros, error: nil)
+            var titles = json?.objectForKey("titles") as NSArray
+            var ids = json?.objectForKey("ids") as NSArray
+            var images = json?.objectForKey("images") as NSArray
+            
+            var columns = json?.objectForKey("columns") as NSArray
+            var contents = json?.objectForKey("contents") as NSArray
+            
+            var i: Int
+            for i = 0; i < titles.count; i++ {
+                var dic = Dictionary<String, String>()
+                dic["title"] = titles[i] as? String
+                dic["id"] = ids[i] as? String
+                dic["image"] = images[i] as? String
+                dic["column"] = columns[i] as? String
+                dic["content"] = contents[i] as? String
+                arrHot.append(dic)
+            }
+            
+            dispatch_async(dispatch_get_main_queue(), {
+                self.tableView.reloadData()
+                if titles.count < 10 {
+                    self.footerLabel?.text = "没有更多"
+                }
+            })
+            
+        }
+        refreshHeaderView?.isLoadingMore = false
+        refreshHeaderView?.refreshScrollViewDataSourceDidFinishedLoading(self.tableView)
+        
+    }
+    
 }
 

@@ -10,6 +10,7 @@ import UIKit
 
 @objc public protocol PZPullToRefreshDelegate: NSObjectProtocol {
     func pullToRefreshDidTrigger(view: PZPullToRefreshView) -> ()
+    func loadMoreDidTrigger(view: PZPullToRefreshView) -> ()
     optional func pullToRefreshLastUpdated(view: PZPullToRefreshView) -> NSDate
 }
 
@@ -42,6 +43,8 @@ public class PZPullToRefreshView: UIView {
             }
         }
     }
+    
+    public var isLoadingMore: Bool = false
     
     private var _state: RefreshState = .Normal
     public var state: RefreshState {
@@ -172,6 +175,12 @@ public class PZPullToRefreshView: UIView {
             if let load = delegate?.respondsToSelector("pullToRefreshDidTrigger:") {
                 delegate?.pullToRefreshDidTrigger(self)
             }
+        }
+        else if (scrollView.contentOffset.y + scrollView.frame.size.height >= scrollView.contentSize.height && !loading && !isLoadingMore) {
+            //加载更多
+            isLoadingMore = true
+            delegate?.loadMoreDidTrigger(self)
+            println("More")
         }
     }
     
